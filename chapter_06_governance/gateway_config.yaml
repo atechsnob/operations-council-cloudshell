@@ -1,0 +1,71 @@
+# chapter_06_governance/gateway_config.yaml
+#
+# Agent Gateway configuration for the Operations Council.
+#
+# Agent Gateway sits in front of the Steward's Cloud Run endpoint and enforces:
+#   1. Authentication  — only valid callers with the right JWT can reach the agent
+#   2. Rate limiting   — prevents runaway ticket ingestion
+#   3. Model Armor     — content filtering on inputs before they reach Gemini
+#   4. Routing rules   — future-proofing for A/B testing different agent versions
+#
+# VERIFY: Schema reflects the Next '26 announcement. Confirm field names and
+# policy structure against Agent Platform documentation before applying.
+#
+# Apply with:
+#   gcloud agent-platform gateways apply \
+#     --config=chapter_06_governance/gateway_config.yaml \
+#     --project=$PROJECT_ID
+
+apiVersion: agent-platform.googleapis.com/v1beta1
+kind: AgentGateway
+metadata:
+  name: operations-council-gateway
+  namespace: ${PROJECT_ID}
+
+spec:
+  displayName: "Operations Council Gateway"
+  location: us-central1
+
+  backend:
+    agentRef: "operations-council-registry/agents/steward"
+
+  authentication:
+    mode: JWT
+    audiences:
+      - "https://steward-${PROJECT_NUMBER}-uc.a.run.app"
+    allowedServiceAccounts:
+      - "operations-council-sa@${PROJECT_ID}.iam.gserviceaccount.com"
+      - "helpdesk-ingest-sa@${PROJECT_ID}.iam.gserviceaccount.com"
+
+  rateLimiting:
+    requestsPerMinute: 60
+    requestsPerHour: 1000
+    burstSize: 10
+    onExceeded: RETURN_429
+
+  contentPolicy:
+    modelArmor:
+      enabled: true
+      policyRef: "projects/${PROJECT_ID}/locations/us-central1/modelArmorPolicies/helpdesk-safety"
+      applyTo:
+        - INPUT    # filter customer ticket content before it reaches Gemini
+        - OUTPUT   # filter agent response before it reaches the ticket system
+
+  routing:
+    strategy: STABLE
+    rules:
+      - condition: "header['x-council-version'] == 'canary'"
+        backend: "operations-council-registry/agents/steward-canary"
+        weight: 0    # disabled until canary deployment in Chapter 7
+
+  observability:
+    tracing:
+      enabled: true
+      sampleRate: 1.0    # 100% in dev; reduce to 0.1 in production
+    metrics:
+      enabled: true
+      exportTo: CLOUD_MONITORING
+    logging:
+      enabled: true
+      includeRequestBody: true   # set false in production for PII compliance
+      includeResponseBody: true

@@ -1,0 +1,25 @@
+# Core ADK and Gemini Enterprise Agent Platform
+google-adk>=1.0.0
+google-cloud-aiplatform[agent-platform]>=1.60.0
+google-genai>=0.3.0
+
+# Data
+google-cloud-bigquery>=3.20.0
+google-cloud-storage>=2.16.0
+pandas>=2.2.0
+
+# MCP server (Chapter 4)
+mcp>=1.0.0
+
+# Web/API (Chapter 7)
+fastapi>=0.110.0
+uvicorn>=0.30.0
+pydantic>=2.6.0
+
+# Testing and evaluation
+pytest>=8.0.0
+pytest-asyncio>=0.23.0
+
+# Dev
+python-dotenv>=1.0.0
+rich>=13.7.0  # nicer console output for the local runner

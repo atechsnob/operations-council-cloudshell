@@ -1,0 +1,92 @@
+# chapter_06_governance/registry_config.yaml
+#
+# Agent Registry configuration for the Operations Council.
+#
+# The Agent Registry is a managed catalog of your deployed agents.
+# It stores metadata (version, capabilities, endpoints) that Agent Gateway
+# uses to route traffic and enforce policies.
+#
+# VERIFY: Schema and field names reflect the Next '26 announcement.
+# Confirm against Agent Platform documentation before applying.
+#
+# Apply with:
+#   gcloud agent-platform registries apply \
+#     --config=chapter_06_governance/registry_config.yaml \
+#     --project=$PROJECT_ID
+
+apiVersion: agent-platform.googleapis.com/v1beta1
+kind: AgentRegistry
+metadata:
+  name: operations-council-registry
+  namespace: ${PROJECT_ID}
+  labels:
+    team: helpdesk
+    env: production
+
+spec:
+  displayName: "Operations Council Agent Registry"
+  description: "Registry for the ContosoCloud helpdesk multi-agent system"
+  location: us-central1
+
+  agents:
+    - name: steward
+      displayName: "Steward"
+      description: "Coordinator agent — orchestrates Triage Scout, Loremaster, and Envoy"
+      version: "1.0.0"
+      endpoint: "https://steward-${PROJECT_NUMBER}-uc.a.run.app"
+      model: gemini-2.0-pro
+      capabilities:
+        - ORCHESTRATION
+        - MULTI_AGENT_DELEGATION
+      identityRef: "projects/${PROJECT_ID}/locations/us-central1/agentIdentities/steward"
+      tags:
+        - coordinator
+        - entry-point
+
+    - name: triage-scout
+      displayName: "Triage Scout"
+      description: "Classifies incoming tickets by category and priority"
+      version: "1.0.0"
+      endpoint: "internal"   # called via AgentTool, not directly over HTTP
+      model: gemini-2.0-flash
+      capabilities:
+        - CLASSIFICATION
+      identityRef: "projects/${PROJECT_ID}/locations/us-central1/agentIdentities/triagescout"
+      tags:
+        - specialist
+        - classification
+
+    - name: loremaster
+      displayName: "Loremaster"
+      description: "Knowledge base retrieval via BigQuery vector search"
+      version: "1.0.0"
+      endpoint: "internal"
+      model: gemini-2.0-pro
+      capabilities:
+        - RETRIEVAL
+        - TOOL_USE
+      identityRef: "projects/${PROJECT_ID}/locations/us-central1/agentIdentities/loremaster"
+      tags:
+        - specialist
+        - rag
+
+    - name: envoy
+      displayName: "Envoy"
+      description: "Customer-facing response drafting"
+      version: "1.0.0"
+      endpoint: "internal"
+      model: gemini-2.0-pro
+      capabilities:
+        - GENERATION
+        - RESPONSE_DRAFTING
+      identityRef: "projects/${PROJECT_ID}/locations/us-central1/agentIdentities/envoy"
+      tags:
+        - specialist
+        - customer-facing
+
+  governance:
+    auditLogging:
+      enabled: true
+      logLevel: FULL        # logs inputs, outputs, and tool calls
+      destination: "projects/${PROJECT_ID}/datasets/operations_council_audit"
+    retentionDays: 90
