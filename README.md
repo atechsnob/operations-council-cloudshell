@@ -27,7 +27,7 @@ cloudshell launch-tutorial cloudshell_tutorial.md
 Once this repo is published to GitHub, students can launch it with one click:
 
 ```markdown
-[![Open in Cloud Shell](https://gstatic.com/cloudssh/images/open-btn.svg)](https://shell.cloud.google.com/cloudshell/editor?cloudshell_git_repo=YOUR_REPO_URL&cloudshell_tutorial=cloudshell_tutorial.md)
+[![Open in Cloud Shell](https://gstatic.com/cloudssh/images/open-btn.svg)](https://shell.cloud.google.com/cloudshell/editor?cloudshell_git_repo=https://github.com/atechsnob/operations-council-cloudshell&cloudshell_tutorial=cloudshell_tutorial.md)
 ```
 
 The `.cloudshell/open.json` config in this repo activates the tutorial automatically.
