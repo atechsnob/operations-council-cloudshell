@@ -30,7 +30,11 @@ echo ""
 read -rp "  Deploy to Cloud Run? (y/N) " confirm
 [[ "${confirm:-}" =~ ^[Yy]$ ]] || { echo "Aborted."; exit 0; }
 
-BUILD_SUBSTITUTIONS="_REGION=${REGION},_REPO_NAME=${REPO_NAME},_SERVICE_ACCOUNT=${SERVICE_ACCOUNT}"
+# SHORT_SHA is only auto-populated on git-triggered builds.
+# For manual gcloud builds submit, generate it from the current HEAD.
+SHORT_SHA=$(git rev-parse --short HEAD 2>/dev/null || echo "manual")
+
+BUILD_SUBSTITUTIONS="_REGION=${REGION},_REPO_NAME=${REPO_NAME},_SERVICE_ACCOUNT=${SERVICE_ACCOUNT},SHORT_SHA=${SHORT_SHA}"
 
 if [[ "${SKIP_TESTS}" == "--skip-tests" ]]; then
   echo "⚠️  Skipping tests — for development only"
