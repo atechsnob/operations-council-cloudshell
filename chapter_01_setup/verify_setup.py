@@ -147,23 +147,26 @@ def check_gcloud() -> bool:
         return False
 
     result = subprocess.run(
-        [gcloud_bin, "version", "--format=value(Google Cloud SDK)"],
+        [gcloud_bin, "--version"],
         capture_output=True,
         text=True,
     )
     if result.returncode == 0:
-        ok(f"gcloud SDK found: {result.stdout.strip()[:60]}")
+        # First line is typically "Google Cloud SDK 4xx.0.0"
+        version_line = result.stdout.strip().splitlines()[0] if result.stdout.strip() else "unknown"
+        ok(f"gcloud SDK found: {version_line}")
     else:
-        fail("gcloud CLI found but 'gcloud version' failed")
+        fail("gcloud CLI found but 'gcloud --version' failed")
         return False
 
     auth = subprocess.run(
-        [gcloud_bin, "auth", "list", "--filter=status:ACTIVE", "--format=value(account)"],
+        [gcloud_bin, "config", "get-value", "account"],
         capture_output=True,
         text=True,
     )
-    if auth.stdout.strip():
-        ok(f"Authenticated as: {auth.stdout.strip()}")
+    account = auth.stdout.strip()
+    if auth.returncode == 0 and account and account != "(unset)":
+        ok(f"Authenticated as: {account}")
     else:
         fail("No active gcloud account — run: gcloud auth login")
         return False
