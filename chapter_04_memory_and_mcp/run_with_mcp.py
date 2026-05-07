@@ -23,8 +23,9 @@ from dotenv import load_dotenv
 from google.adk.agents import LlmAgent
 from google.adk.runners import InMemoryRunner
 from google.adk.tools import AgentTool
-from google.adk.tools.mcp_tool import MCPToolset, StdioServerParameters
+from google.adk.tools.mcp_tool import MCPToolset
 from google.genai import types as genai_types
+from mcp import StdioServerParameters
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from chapter_03_council.config import MODEL_PRO
