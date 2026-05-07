@@ -195,10 +195,21 @@ else
   ok "BigQuery dataset already exists"
 fi
 
-# ─── 8. Load knowledge base ────────────────────────────────────────────────────
-step "Loading knowledge base into BigQuery"
+# ─── 8. BigQuery <-> Agent Platform connection ─────────────────────────────────
+step "Creating BigQuery connection for embeddings (Loremaster's RAG)"
 
 set -a; source .env; set +a
+
+if bash scripts/create_bq_connection.sh; then
+  ok "BigQuery connection ready"
+else
+  warn "BQ connection setup failed — KB rows will load but embeddings table will not."
+  warn "Re-run later with: bash scripts/create_bq_connection.sh"
+fi
+
+# ─── 9. Load knowledge base ────────────────────────────────────────────────────
+step "Loading knowledge base into BigQuery"
+
 if python scripts/load_knowledge_base.py 2>&1; then
   ok "Knowledge base loaded"
 else

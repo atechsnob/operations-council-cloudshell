@@ -147,8 +147,9 @@ def main() -> None:
         # We emit a friendly error so learners can come back after Chapter 3
         # when they set the connection up.
         print(f"⚠ Could not create embeddings table: {exc}")
-        print("  This is expected if you haven't created the BigQuery <-> Agent Platform")
-        print("  connection yet. See chapter_03_council/loremaster/README.md.")
+        print("  Run the connection helper, then re-run this script:")
+        print("    bash scripts/create_bq_connection.sh")
+        print("    python scripts/load_knowledge_base.py")
 
 
 if __name__ == "__main__":
