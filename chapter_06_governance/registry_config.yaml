@@ -34,7 +34,7 @@ spec:
       description: "Coordinator agent — orchestrates Triage Scout, Loremaster, and Envoy"
       version: "1.0.0"
       endpoint: "https://steward-${PROJECT_NUMBER}-uc.a.run.app"
-      model: gemini-2.0-pro
+      model: gemini-2.5-pro
       capabilities:
         - ORCHESTRATION
         - MULTI_AGENT_DELEGATION
@@ -48,7 +48,7 @@ spec:
       description: "Classifies incoming tickets by category and priority"
       version: "1.0.0"
       endpoint: "internal"   # called via AgentTool, not directly over HTTP
-      model: gemini-2.0-flash
+      model: gemini-2.5-flash
       capabilities:
         - CLASSIFICATION
       identityRef: "projects/${PROJECT_ID}/locations/us-central1/agentIdentities/triagescout"
@@ -61,7 +61,7 @@ spec:
       description: "Knowledge base retrieval via BigQuery vector search"
       version: "1.0.0"
       endpoint: "internal"
-      model: gemini-2.0-pro
+      model: gemini-2.5-pro
       capabilities:
         - RETRIEVAL
         - TOOL_USE
@@ -75,7 +75,7 @@ spec:
       description: "Customer-facing response drafting"
       version: "1.0.0"
       endpoint: "internal"
-      model: gemini-2.0-pro
+      model: gemini-2.5-pro
       capabilities:
         - GENERATION
         - RESPONSE_DRAFTING

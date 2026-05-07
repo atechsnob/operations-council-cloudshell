@@ -41,14 +41,14 @@ A multi-agent council that processes incoming helpdesk tickets:
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                      THE STEWARD                            │
-│              (Coordinator, gemini-2.0-pro)                  │
+│              (Coordinator, gemini-2.5-pro)                  │
 │  Receives ticket → Decides who acts → Delegates → Synthesizes│
 └──────────┬──────────────────┬──────────────────┬────────────┘
            │                  │                  │
            ▼                  ▼                  ▼
    TRIAGE SCOUT         LOREMASTER             ENVOY
   (Classifier)        (RAG retrieval)     (Response draft)
-  gemini-2.0-flash    gemini-2.0-pro      gemini-2.0-pro
+  gemini-2.5-flash    gemini-2.5-pro      gemini-2.5-pro
                             │
                             ▼
                   ┌──────────────────┐

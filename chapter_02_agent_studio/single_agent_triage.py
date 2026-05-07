@@ -24,7 +24,7 @@ load_dotenv()
 
 PROJECT_ID = os.environ["PROJECT_ID"]
 REGION = os.environ.get("REGION", "us-central1")
-MODEL = os.environ.get("MODEL_FLASH", "gemini-2.0-flash")
+MODEL = os.environ.get("MODEL_FLASH", "gemini-2.5-flash")
 
 # ─── system prompt ────────────────────────────────────────────────────────────
 

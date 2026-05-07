@@ -14,7 +14,7 @@ Every Council member starts as a solo operative before joining the guild. In thi
 2. Click **Create agent**
 3. Fill in:
    - **Name:** `triage-scout-prototype`
-   - **Model:** `gemini-2.0-flash`
+   - **Model:** `gemini-2.5-flash`
    - **System instruction:** paste the `SYSTEM_PROMPT` from `single_agent_triage.py`
 4. In the **Test** panel, paste one of the sample tickets from `data/sample_tickets.json`
 5. Observe the response — classification, priority, and first-response draft
@@ -63,7 +63,7 @@ The reflection block at the end of the script explains *why* one agent isn't eno
 
 ## Exercises
 
-1. Change `MODEL_FLASH` in your `.env` to `gemini-2.0-flash` and rerun — do the classifications change?
+1. Change `MODEL_FLASH` in your `.env` to `gemini-2.5-flash` and rerun — do the classifications change?
 2. Add a fourth sample ticket with two simultaneous issues (billing + outage). How does the single agent handle priority?
 3. Look at the Megaticket response. Which issues did it miss or combine?
 

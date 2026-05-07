@@ -13,8 +13,8 @@ load_dotenv()
 PROJECT_ID: str = os.environ["PROJECT_ID"]
 REGION: str = os.environ.get("REGION", "us-central1")
 
-MODEL_PRO: str = os.environ.get("MODEL_PRO", "gemini-2.0-pro")
-MODEL_FLASH: str = os.environ.get("MODEL_FLASH", "gemini-2.0-flash")
+MODEL_PRO: str = os.environ.get("MODEL_PRO", "gemini-2.5-pro")
+MODEL_FLASH: str = os.environ.get("MODEL_FLASH", "gemini-2.5-flash")
 
 BQ_DATASET: str = os.environ.get("BQ_DATASET", "operations_council")
 BQ_KB_TABLE: str = os.environ.get("BQ_KB_TABLE", "knowledge_base")
