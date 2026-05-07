@@ -1,0 +1,4 @@
+{
+  "tutorial": "cloudshell_tutorial.md",
+  "trustedFiles": ["cloudshell_bootstrap.sh"]
+}
