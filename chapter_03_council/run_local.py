@@ -19,6 +19,10 @@ import sys
 import time
 from pathlib import Path
 
+# Make the repo root importable so this script can be run directly:
+#   python chapter_03_council/run_local.py
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
 from rich.console import Console
 from rich.panel import Panel
 from rich.progress import Progress, SpinnerColumn, TextColumn

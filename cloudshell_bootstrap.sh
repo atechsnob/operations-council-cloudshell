@@ -131,6 +131,27 @@ else
   ok "Service account already exists"
 fi
 
+# IAM propagation can lag service-account creation by a few seconds.
+# Retry the first binding until it succeeds (or give up after ~60s).
+bind_role() {
+  local role="$1"
+  local attempts=0
+  local max=15
+  until gcloud projects add-iam-policy-binding "${PROJECT_ID}" \
+        --member="serviceAccount:${SA_EMAIL}" \
+        --role="${role}" \
+        --condition=None \
+        --quiet >/dev/null 2>&1; do
+    attempts=$((attempts + 1))
+    if [[ ${attempts} -ge ${max} ]]; then
+      err "Failed to bind ${role} after ${max} attempts"
+      return 1
+    fi
+    sleep 4
+  done
+}
+
+echo "  Waiting for IAM propagation and binding roles…"
 for role in \
   roles/aiplatform.user \
   roles/artifactregistry.admin \
@@ -143,11 +164,7 @@ for role in \
   roles/run.admin \
   roles/secretmanager.secretAccessor \
   roles/storage.objectViewer; do
-  gcloud projects add-iam-policy-binding "${PROJECT_ID}" \
-    --member="serviceAccount:${SA_EMAIL}" \
-    --role="${role}" \
-    --condition=None \
-    --quiet >/dev/null
+  bind_role "${role}"
 done
 ok "Granted 11 IAM roles to service account"
 

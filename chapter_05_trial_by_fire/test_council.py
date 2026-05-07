@@ -15,7 +15,12 @@ Run:
 
 import asyncio
 import json
+import sys
 from pathlib import Path
+
+# Ensure the repo root is on sys.path whether pytest is invoked from the
+# repo root or this file is run directly.
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import pytest
 

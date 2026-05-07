@@ -19,7 +19,12 @@ import argparse
 import asyncio
 import json
 import re
+import sys
 from pathlib import Path
+
+# Make the repo root importable so this script can be run directly:
+#   python chapter_05_trial_by_fire/run_eval.py
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from rich.console import Console
 from rich.table import Table
