@@ -31,6 +31,8 @@ steps:
     id: "build"
     args:
       - "build"
+      - "-f"
+      - "chapter_07_deployment/Dockerfile"
       - "-t"
       - "$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/operations-council:$SHORT_SHA"
       - "-t"
