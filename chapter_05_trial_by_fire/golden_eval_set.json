@@ -1,0 +1,80 @@
+{
+  "eval_set_id": "operations-council-golden-v1",
+  "description": "Golden evaluation set for the Operations Council course. Tests correct category, priority, and response quality for each agent.",
+  "cases": [
+    {
+      "id": "eval-001",
+      "name": "password_reset_basic",
+      "input": "Ticket ID: T-1001\nSubject: Can't log in\n\nI can't log in to my account this morning. I tried my usual password and it's not working. I haven't changed it. Help!",
+      "expected_triage": {
+        "category": "PASSWORD_RESET",
+        "priority": "MEDIUM"
+      },
+      "response_must_contain": ["password", "reset"],
+      "response_must_not_contain": ["billing", "outage", "quota"],
+      "notes": "Clean single-issue ticket. Standard priority."
+    },
+    {
+      "id": "eval-002",
+      "name": "billing_dispute_medium",
+      "input": "Ticket ID: T-1002\nSubject: Charge looks wrong\n\nMy March invoice has a $1,247 charge for AI Platform that doesn't match what I've used. I checked the usage page and it shows about $300 of activity.",
+      "expected_triage": {
+        "category": "BILLING_DISPUTE",
+        "priority": "HIGH"
+      },
+      "response_must_contain": ["invoice", "billing"],
+      "response_must_not_contain": ["password", "outage"],
+      "notes": "Specific dollar amount + documented discrepancy = HIGH, not MEDIUM."
+    },
+    {
+      "id": "eval-003",
+      "name": "outage_report_high",
+      "input": "Ticket ID: T-1003\nSubject: Is something down?\n\nOur API calls to Cloud Storage have been timing out for the last 20 minutes. We're in us-east1. Status page doesn't show anything.",
+      "expected_triage": {
+        "category": "OUTAGE_REPORT",
+        "priority": "HIGH"
+      },
+      "response_must_contain": ["storage", "timeout"],
+      "response_must_not_contain": ["password", "billing"],
+      "notes": "Active impact to production + no status page entry = HIGH."
+    },
+    {
+      "id": "eval-004",
+      "name": "quota_issue_medium",
+      "input": "Ticket ID: T-1004\nSubject: RESOURCE_EXHAUSTED on Vertex\n\nStarted getting RESOURCE_EXHAUSTED errors on text-embedding requests around 9am Pacific. We're well under our previous usage. Did something change?",
+      "expected_triage": {
+        "category": "QUOTA_ISSUE",
+        "priority": "HIGH"
+      },
+      "response_must_contain": ["quota", "limit"],
+      "response_must_not_contain": ["password", "billing"],
+      "notes": "Sudden onset without usage change often means quota adjustment — HIGH."
+    },
+    {
+      "id": "eval-005",
+      "name": "escalation_critical",
+      "input": "Ticket ID: T-1005\nSubject: Need a refund — this is urgent\n\nWe were billed $3,400 for a service we cancelled in February. I have the cancellation confirmation. I need a human to look at this immediately or I'm going to escalate to my legal team.",
+      "expected_triage": {
+        "category": "ESCALATION_NEEDED",
+        "priority": "CRITICAL"
+      },
+      "response_must_contain": ["human", "review"],
+      "response_must_not_contain": ["automated", "bot"],
+      "flags_must_contain": ["HUMAN REVIEW REQUIRED"],
+      "notes": "Legal threat → CRITICAL + ESCALATION_NEEDED. Human review flag mandatory."
+    },
+    {
+      "id": "eval-006",
+      "name": "megaticket_multi_issue",
+      "input": "Ticket ID: T-megaticket-001\nSubject: Multi-issue: cancellation, refund, and a current outage\n\nThree things. (1) We cancelled our contract on Feb 10 but were still charged $4,200 in March — we want a refund of the full amount. (2) Our remaining production workloads are seeing intermittent timeouts to Cloud Storage in us-central1 — about 1 in 20 requests fails. (3) When this is sorted, please send us instructions on exporting our remaining data so we can move off the platform. Time-sensitive — we have a board update in 48 hours.",
+      "expected_triage": {
+        "category": "MULTI_ISSUE",
+        "priority": "CRITICAL"
+      },
+      "expected_sub_issues": ["BILLING_DISPUTE", "OUTAGE_REPORT", "DATA_EXPORT"],
+      "response_must_contain": ["refund", "storage", "export"],
+      "flags_must_contain": ["HUMAN REVIEW REQUIRED"],
+      "notes": "All three sub-issues must appear in draft response. CRITICAL because of board deadline + billing amount."
+    }
+  ]
+}

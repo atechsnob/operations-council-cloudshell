@@ -1,0 +1,40 @@
+{
+  "tickets": [
+    {
+      "ticket_id": "T-1001",
+      "user_id": "u-alice",
+      "subject": "Can't log in",
+      "body": "I can't log in to my account this morning. I tried my usual password and it's not working. I haven't changed it. Help!"
+    },
+    {
+      "ticket_id": "T-1002",
+      "user_id": "u-bob",
+      "subject": "Charge looks wrong",
+      "body": "My March invoice has a $1,247 charge for AI Platform that doesn't match what I've used. I checked the usage page and it shows about $300 of activity. Can someone look into this?"
+    },
+    {
+      "ticket_id": "T-1003",
+      "user_id": "u-carol",
+      "subject": "Is something down?",
+      "body": "Our API calls to Cloud Storage have been timing out for the last 20 minutes. We're in us-east1. Status page doesn't show anything. Is this a known issue?"
+    },
+    {
+      "ticket_id": "T-1004",
+      "user_id": "u-dave",
+      "subject": "RESOURCE_EXHAUSTED on Vertex",
+      "body": "Started getting RESOURCE_EXHAUSTED errors on text-embedding requests around 9am Pacific. We're well under our previous usage. Did something change?"
+    },
+    {
+      "ticket_id": "T-1005",
+      "user_id": "u-eve",
+      "subject": "Need a refund — this is urgent",
+      "body": "We were billed $3,400 for a service we cancelled in February. I have the cancellation confirmation. I need a human to look at this immediately or I'm going to escalate to my legal team."
+    },
+    {
+      "ticket_id": "T-megaticket-001",
+      "user_id": "u-megacorp",
+      "subject": "Multi-issue: cancellation, refund, and a current outage",
+      "body": "Three things. (1) We cancelled our contract on Feb 10 but were still charged $4,200 in March — we want a refund of the full amount. (2) Our remaining production workloads are seeing intermittent timeouts to Cloud Storage in us-central1 — about 1 in 20 requests fails. (3) When this is sorted, please send us instructions on exporting our remaining data so we can move off the platform. Time-sensitive — we have a board update in 48 hours."
+    }
+  ]
+}

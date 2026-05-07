@@ -22,10 +22,13 @@ env/
 Thumbs.db
 
 # GCP credentials (never commit)
-*.json
-!*.evalset.json
-!*.test_config.json
+# Targeted patterns only — do NOT use a broad *.json rule, it silently
+# excludes data/sample_tickets.json and chapter_05_trial_by_fire/golden_eval_set.json.
 service-account-*.json
+*-credentials.json
+gcloud-key-*.json
+key.json
+credentials.json
 
 # Local outputs
 output/
