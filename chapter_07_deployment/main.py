@@ -38,7 +38,7 @@ REGION = os.environ.get("REGION", "us-central1")
 # ─── startup ─────────────────────────────────────────────────────────────────
 
 _runner: InMemoryRunner | None = None
-_session_service: InMemorySessionService | None = None
+_session_service = None
 
 
 @asynccontextmanager

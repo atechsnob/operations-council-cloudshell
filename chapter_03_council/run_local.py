@@ -50,7 +50,7 @@ def load_tickets(ticket_id: str | None = None) -> list[dict]:
 
 async def process_ticket(
     runner: InMemoryRunner,
-    session_service: InMemorySessionService,
+    session_service,
     ticket: dict,
     verbose: bool = False,
 ) -> str:
