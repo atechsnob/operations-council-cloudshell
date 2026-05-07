@@ -124,21 +124,41 @@ def check_packages() -> bool:
 
 def check_gcloud() -> bool:
     section("gcloud CLI")
+    import shutil
     import subprocess
 
+    # The Python venv can narrow PATH so that gcloud isn't found via
+    # subprocess even though it's installed.  Try shutil.which first,
+    # then fall back to well-known Cloud Shell / system locations.
+    gcloud_bin = shutil.which("gcloud")
+    if not gcloud_bin:
+        for candidate in [
+            Path.home() / "google-cloud-sdk" / "bin" / "gcloud",
+            Path("/usr/lib/google-cloud-sdk/bin/gcloud"),
+            Path("/usr/bin/gcloud"),
+            Path("/snap/bin/gcloud"),
+        ]:
+            if candidate.exists():
+                gcloud_bin = str(candidate)
+                break
+
+    if not gcloud_bin:
+        fail("gcloud CLI not found — install from https://cloud.google.com/sdk")
+        return False
+
     result = subprocess.run(
-        ["gcloud", "version", "--format=value(Google Cloud SDK)"],
+        [gcloud_bin, "version", "--format=value(Google Cloud SDK)"],
         capture_output=True,
         text=True,
     )
     if result.returncode == 0:
         ok(f"gcloud SDK found: {result.stdout.strip()[:60]}")
     else:
-        fail("gcloud CLI not found — install from https://cloud.google.com/sdk")
+        fail("gcloud CLI found but 'gcloud version' failed")
         return False
 
     auth = subprocess.run(
-        ["gcloud", "auth", "list", "--filter=status:ACTIVE", "--format=value(account)"],
+        [gcloud_bin, "auth", "list", "--filter=status:ACTIVE", "--format=value(account)"],
         capture_output=True,
         text=True,
     )
