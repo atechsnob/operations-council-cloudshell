@@ -141,6 +141,8 @@ If any test fails, the build stops and the agent doesn't deploy.
 - [ ] `run_eval.py` prints a results table
 - [ ] CRITICAL tickets always have the human-review flag (regression guard passes)
 
+> **Expect some failures.** If you see 14 passed / 7 failed, that's a typical first run — not a broken setup. LLMs are non-deterministic: the Triage Scout might wrap its JSON in markdown fences (` ```json ``` `), or the model might rephrase "refund" as "billing adjustment." Read the failing test messages — if the *concept* was addressed but the *exact keyword* was missed, the agent is working correctly and the eval is surfacing the brittleness of exact-string matching. That's the lesson of this chapter.
+
 ---
 
 **Next:** [Chapter 6 — The Governance Chamber](../chapter_06_governance/README.md)

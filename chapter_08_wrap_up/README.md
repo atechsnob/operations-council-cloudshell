@@ -18,6 +18,33 @@ Here's what you actually built, stripped of the narrative:
 
 ---
 
+## A note on your results
+
+If you're reading this, you've run the course from start to finish. Along the way you probably noticed:
+
+- **Chapter 5:** Some pytest tests failed. The Triage Scout returned JSON wrapped in markdown fences, or a CRITICAL ticket didn't include the exact text "HUMAN REVIEW REQUIRED."
+- **Chapter 7:** The Final Trial's automatic assertions caught 4 out of 5 — maybe the model wrote "billing discrepancy" instead of "refund."
+
+**This is normal. This is the lesson.**
+
+LLMs are non-deterministic. The same prompt, same model, same input can produce subtly different outputs on every run. The Council *understood* every issue and *addressed* every concern — but it didn't always use the exact words your assertions expected.
+
+### What this teaches you about production evaluation
+
+| Approach | Brittle? | When to use |
+|---|---|---|
+| Exact keyword match (`"refund" in output`) | Yes | Quick smoke tests; never as the only eval |
+| Fuzzy / stemmed matching (`refund*`, `billing*`) | Less | Better for keyword coverage checks |
+| Semantic similarity (embedding distance) | No | When you care about meaning, not wording |
+| LLM-as-judge (a second model scores the response) | No | Gold standard for open-ended quality |
+| Structured output (JSON schema enforcement) | No | When you can constrain the model's format |
+
+The eval suite in Chapter 5 intentionally uses the simplest approach — exact matching — so you experience the brittleness firsthand. In production, you'd layer these approaches: structured output for classification fields, semantic similarity for response quality, and LLM-as-judge for nuanced requirements like tone and compliance.
+
+**The fact that your Council handled the Megaticket correctly despite a keyword assertion miss is proof that the agent works. The assertion miss is proof that your eval needs to evolve.** That tension — between agent capability and eval reliability — is the central challenge of production AI systems.
+
+---
+
 ## The pattern you now own
 
 ```

@@ -106,6 +106,30 @@ The script:
 5. Runs 5 assertions (refund, storage/timeout, export, human-review flag, CRITICAL priority)
 6. Exits 0 if all pass, exits 1 if any fail
 
+### Understanding your Final Trial results
+
+**Don't panic if 1–2 assertions fail.** This is expected and is one of the most important lessons in the course.
+
+The 5 assertions use **exact keyword matching** — for example, the script checks whether the word "refund" appears in the response. But LLMs are non-deterministic. The Council might write *"investigate the unexpected charge"* or *"process the billing discrepancy"* instead of *"issue a refund"*. The **concept** is fully addressed, but the exact keyword is missing.
+
+Here's what each result means:
+
+| Result | What it means |
+|---|---|
+| **5/5 pass** | The model happened to use every expected keyword — great, but don't expect this every run |
+| **4/5 pass** (typical) | The Council addressed all issues correctly but paraphrased one keyword — this is normal LLM behavior |
+| **3/5 pass** | Review the response — did it address all three issues? If yes, the eval is too brittle, not the agent |
+| **HUMAN REVIEW or CRITICAL fails** | This is a real concern — these are safety-critical assertions that should always pass |
+
+**The takeaway:** Exact-string matching is a starting point, not a production-grade evaluation strategy. In a real deployment, you'd use:
+
+- **Semantic similarity** — embedding the expected and actual outputs and comparing cosine distance
+- **LLM-as-judge** — a separate model evaluates whether the response addresses the requirement
+- **Fuzzy keyword matching** — checking for word stems (`refund`, `refunded`, `refunding`) rather than exact strings
+- **Structured output parsing** — enforcing JSON schemas so assertions can target fields, not free text
+
+This is exactly the gap Chapter 5 surfaces — the difference between *"it works in a demo"* and *"it passes a test suite reliably."*
+
 ---
 
 ## Cloud Run configuration
