@@ -103,9 +103,16 @@ def main() -> None:
     url = get_service_url()
     console.print(f"\n[dim]Service URL: {url}[/dim]")
 
+    # Get auth token (needed for all Cloud Run requests)
+    token = get_identity_token()
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json",
+    }
+
     # Health check
     try:
-        health = requests.get(f"{url}/health", timeout=10)
+        health = requests.get(f"{url}/health", headers=headers, timeout=10)
         health.raise_for_status()
         console.print(f"[green]✓ Service healthy[/green]")
     except requests.RequestException as exc:
@@ -116,12 +123,6 @@ def main() -> None:
     console.rule("[bold]Sending Megaticket to Production[/bold]")
     console.print(f"\n[dim]Ticket ID: {MEGATICKET['ticket_id']}[/dim]")
     console.print(f"[dim]Subject: {MEGATICKET['subject']}[/dim]\n")
-
-    token = get_identity_token()
-    headers = {
-        "Authorization": f"Bearer {token}",
-        "Content-Type": "application/json",
-    }
 
     start = time.perf_counter()
     try:
