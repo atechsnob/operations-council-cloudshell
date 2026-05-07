@@ -23,7 +23,8 @@ from dotenv import load_dotenv
 from google.adk.agents import LlmAgent
 from google.adk.runners import InMemoryRunner
 from google.adk.tools import AgentTool
-from google.adk.tools.mcp_tool import MCPToolset
+from google.adk.tools.mcp_tool.mcp_toolset import McpToolset
+from google.adk.tools.mcp_tool.mcp_session_manager import StdioConnectionParams
 from google.genai import types as genai_types
 from mcp import StdioServerParameters
 
@@ -38,18 +39,20 @@ load_dotenv()
 MCP_SERVER_SCRIPT = str(Path(__file__).parent / "mcp_server.py")
 
 
-async def build_steward_with_mcp() -> LlmAgent:
+def build_steward_with_mcp() -> LlmAgent:
     """Build the Steward agent with MCP CRM tools attached."""
 
-    mcp_toolset = MCPToolset(
-        connection_params=StdioServerParameters(
-            command="python",
-            args=[MCP_SERVER_SCRIPT],
+    # McpToolset replaces the deprecated MCPToolset.
+    # StdioConnectionParams wraps StdioServerParameters for the new API.
+    mcp_toolset = McpToolset(
+        connection_params=StdioConnectionParams(
+            server_params=StdioServerParameters(
+                command="python",
+                args=[MCP_SERVER_SCRIPT],
+            )
         )
     )
-
-    crm_tools = await mcp_toolset.load_tools()
-    print(f"MCP tools loaded: {[t.name for t in crm_tools]}")
+    print("MCP CRM toolset configured (tools discovered dynamically)")
 
     steward_with_mcp = LlmAgent(
         model=MODEL_PRO,
@@ -78,7 +81,7 @@ Always call `update_ticket_status` at the end — this closes the loop with the 
             AgentTool(agent=triage_scout),
             AgentTool(agent=loremaster),
             AgentTool(agent=envoy),
-            *crm_tools,
+            mcp_toolset,
         ],
     )
 
@@ -87,7 +90,7 @@ Always call `update_ticket_status` at the end — this closes the loop with the 
 
 async def main() -> None:
     print("Building Steward with MCP CRM integration…")
-    steward = await build_steward_with_mcp()
+    steward = build_steward_with_mcp()
 
     runner = InMemoryRunner(agent=steward, app_name="operations-council")
     session_service = runner.session_service
