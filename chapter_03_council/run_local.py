@@ -28,7 +28,6 @@ from rich.panel import Panel
 from rich.progress import Progress, SpinnerColumn, TextColumn
 
 from google.adk.runners import InMemoryRunner
-from google.adk.sessions import InMemorySessionService
 from google.genai import types as genai_types
 
 from chapter_03_council.steward import steward
@@ -85,8 +84,8 @@ async def process_ticket(
 
 async def main(ticket_id: str | None = None, verbose: bool = False) -> None:
     tickets = load_tickets(ticket_id)
-    session_service = InMemorySessionService()
-    runner = InMemoryRunner(agent=steward, session_service=session_service)
+    runner = InMemoryRunner(agent=steward, app_name="operations-council")
+    session_service = runner.session_service
 
     console.print(
         Panel(

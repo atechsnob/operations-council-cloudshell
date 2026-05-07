@@ -30,7 +30,6 @@ from rich.console import Console
 from rich.table import Table
 
 from google.adk.runners import InMemoryRunner
-from google.adk.sessions import InMemorySessionService
 from google.genai import types as genai_types
 
 from chapter_03_council.steward import steward
@@ -49,8 +48,8 @@ def load_cases(case_id: str | None = None) -> list[dict]:
 
 
 async def run_agent_async(agent, message: str) -> str:
-    session_service = InMemorySessionService()
-    runner = InMemoryRunner(agent=agent, session_service=session_service)
+    runner = InMemoryRunner(agent=agent, app_name="eval")
+    session_service = runner.session_service
     session = await session_service.create_session(app_name="eval", user_id="eval-user")
 
     parts = []

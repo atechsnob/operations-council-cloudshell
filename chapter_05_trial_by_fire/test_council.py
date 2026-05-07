@@ -25,7 +25,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import pytest
 
 from google.adk.runners import InMemoryRunner
-from google.adk.sessions import InMemorySessionService
 from google.genai import types as genai_types
 
 # ─── helpers ─────────────────────────────────────────────────────────────────
@@ -39,8 +38,8 @@ def load_eval_cases() -> list[dict]:
 
 
 async def run_agent_async(agent, message: str) -> str:
-    session_service = InMemorySessionService()
-    runner = InMemoryRunner(agent=agent, session_service=session_service)
+    runner = InMemoryRunner(agent=agent, app_name="test")
+    session_service = runner.session_service
     session = await session_service.create_session(app_name="test", user_id="test-user")
 
     parts = []

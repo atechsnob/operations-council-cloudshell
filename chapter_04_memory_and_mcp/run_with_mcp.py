@@ -22,7 +22,6 @@ from pathlib import Path
 from dotenv import load_dotenv
 from google.adk.agents import LlmAgent
 from google.adk.runners import InMemoryRunner
-from google.adk.sessions import InMemorySessionService
 from google.adk.tools import AgentTool
 from google.adk.tools.mcp_tool import MCPToolset, StdioServerParameters
 from google.genai import types as genai_types
@@ -89,8 +88,8 @@ async def main() -> None:
     print("Building Steward with MCP CRM integration…")
     steward = await build_steward_with_mcp()
 
-    session_service = InMemorySessionService()
-    runner = InMemoryRunner(agent=steward, session_service=session_service)
+    runner = InMemoryRunner(agent=steward, app_name="operations-council")
+    session_service = runner.session_service
 
     # Run the megaticket — the richest test for CRM history lookup
     ticket = {

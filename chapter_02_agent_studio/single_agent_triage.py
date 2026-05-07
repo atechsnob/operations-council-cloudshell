@@ -18,7 +18,6 @@ from dotenv import load_dotenv
 
 from google.adk.agents import LlmAgent
 from google.adk.runners import InMemoryRunner
-from google.adk.sessions import InMemorySessionService
 from google.genai import types as genai_types
 
 load_dotenv()
@@ -89,8 +88,8 @@ SAMPLE_TICKETS = [
 
 
 async def run_single_agent() -> None:
-    session_service = InMemorySessionService()
-    runner = InMemoryRunner(agent=triage_agent, session_service=session_service)
+    runner = InMemoryRunner(agent=triage_agent, app_name="TriageScout_v1")
+    session_service = runner.session_service
 
     for ticket in SAMPLE_TICKETS:
         print(f"\n{'='*60}")

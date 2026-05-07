@@ -28,7 +28,6 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
 from google.adk.runners import InMemoryRunner
-from google.adk.sessions import InMemorySessionService
 from google.genai import types as genai_types
 
 load_dotenv()
@@ -50,8 +49,8 @@ async def lifespan(app: FastAPI):
 
     from chapter_03_council.steward import steward
 
-    _session_service = InMemorySessionService()
-    _runner = InMemoryRunner(agent=steward, session_service=_session_service)
+    _runner = InMemoryRunner(agent=steward, app_name="operations-council")
+    _session_service = _runner.session_service
 
     print(f"Operations Council ready — project={PROJECT_ID} region={REGION}")
     yield
