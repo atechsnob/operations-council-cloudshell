@@ -1,0 +1,35 @@
+# AI Service Desk: Architecting a Multi-Agent Support Team — On-Camera Instructor Scripts (v2)
+
+## Welcome Video (Course Overview)
+"Welcome to AI Service Desk: Architecting a Multi-Agent Support Team. I'm thrilled to be your guide. This is a text-based, go-at-your-own-pace course designed to get you hands-on with cutting-edge AI orchestration. You'll be reading through the core lessons and executing code in your own browser-based environment, with me dropping in through these videos to set the stage and highlight key takeaways. 
+
+Our mission is ambitious: we are going to build a fully automated, production-ready AI Service Desk from scratch. You'll learn how to take a struggling single AI model and break it apart into a team of specialized agents that can triage tickets, search a knowledge base, and draft responses. We'll wire them up to real systems using the Model Context Protocol, evaluate their performance using automated testing, and finally, deploy the entire system to Google Cloud Run as a secure, authenticated API. By the end of this course, you won't just have a toy chatbot—you'll have an enterprise-ready architecture. Let's get started."
+
+## Chapter 1: The Mission & Setup
+"Alright, it's time to set the stage for our mission. Our ultimate objective is to build a multi-agent Service Desk capable of handling complex, multi-issue support tickets without hallucinating or breaking. To do that, we need a solid foundation.
+
+Because this course is text-based and self-paced, you're in the driver's seat. You'll navigate through the lessons on your own, running the provided code entirely inside Google Cloud Shell. This means you don't have to worry about local Python versions or Docker installs—everything runs right in your browser. As you complete each lesson, don't forget to mark the green checkmark on the course's table of contents on the left-hand side to track your progress. 
+
+In this first chapter, you'll run a bootstrap script that sets up your virtual environment, authenticates your account, and loads our fictional company's data into BigQuery. Take your time here. Getting this setup right makes the rest of your mission a breeze. I'll check back in with you in Chapter 2."
+
+## Chapter 2: First Strike (The Baseline)
+"In this chapter, we're building our first agent. Now, you might be wondering, 'Isn't this a multi-agent course?' Yes! But before we build our AI Service Desk team, you need to feel the pain of a single agent trying to do too much. We're going to give one model the job of categorizing, researching, and responding to tickets. Pay close attention to how it handles our complex 'Megaticket' at the end of the chapter. It's going to struggle, and those cracks are exactly why we need a multi-agent support team."
+
+## Chapter 3: Forging the Specialists 
+*(Producer note: Keep as is, just need a cleaner take to cut around mini-pauses)*
+"Now we're talking. We're taking that struggling single agent and breaking it apart into a team of specialists using the Agent Development Kit. You'll meet the Triage Scout, the Loremaster, the Envoy, and the Steward who coordinates them all to form our AI Service Desk. As you run the code in this chapter, watch the terminal output closely. You'll actually see the Steward thinking, deciding who to call, and synthesizing their work. This pattern—specialization and orchestration—is the secret to reliable enterprise AI."
+
+## Chapter 4: Memory & Tools (MCP)
+"LLM agents are just a party trick until they can actually connect to your business systems. In this chapter, we're giving our AI Support Team hands and a memory. We'll use the Model Context Protocol (MCP) to let our agents read and update a CRM, and we'll wire up the Agent Memory Bank so they can remember user preferences across different sessions. This is the moment our system stops just answering questions, and starts taking real action."
+
+## Chapter 5: Trial by Fire (Evals)
+"Alright, this is arguably the most important chapter in the course. We are running an automated evaluation suite against our Service Desk agents. **Spoiler alert: you are probably going to see some test failures.** That is entirely by design! LLMs are non-deterministic, and exact-keyword testing is brittle. I want you to experience what happens when the agent gets the concept right, but misses the exact word our test was looking for. Don't panic when you see red text—this tension is the reality of evaluating AI in production."
+
+## Chapter 6: The Governance Chamber
+"You can't deploy an AI agent to production without guardrails. In this chapter, we enter the Governance Chamber. We're looking at Agent Identity to create granular audit trails—so we know which agent took an action, not just which service account. We'll also demo Model Armor to block prompt injections and redact PII. This governance layer is exactly what separates a weekend hackathon project from an enterprise-ready system."
+
+## Chapter 7: The Final Trial (Deployment)
+"This is it—the Final Trial. We are wrapping our AI Service Desk in a FastAPI app, containerizing it, and deploying it to Cloud Run using a Cloud Build CI/CD pipeline. Once it's live, you'll run a script that fires our hardest 'Megaticket' at your secured, production endpoint. Remember our lesson from Chapter 5—if an automated assertion misses a keyword, that just means your eval needs to evolve. Celebrate the fact that your pipeline is working end-to-end!"
+
+## Chapter 8: Wrap-up
+"You did it. You took a single, struggling agent and evolved it into a production-ready, governed, and evaluated multi-agent support team. The pattern you just learned—prototype, specialize, connect tools, evaluate, govern, and deploy—is your blueprint for any enterprise AI project going forward. Whether you're building a system for procurement, HR, or finance, you now have the architecture to make it work. Our AI Service Desk is ready for action—go build something remarkable."

@@ -1,0 +1,1315 @@
+# AI Service Desk: Architecting a Multi-Agent Support Team
+# Complete Course Manuscript
+
+
+
+============================================================
+--- SOURCE: README.md ---
+============================================================
+
+# The AI Service Desk — Cloud Shell Edition
+
+> Hands-on code for the LinkedIn Learning course **"The AI Service Desk: Build a Production-Ready Multi-Agent System on Google Cloud"** — packaged to run entirely inside Google Cloud Shell. No local Python, Docker, or gcloud install required.
+
+---
+
+## Quick start (3 commands)
+
+In Cloud Shell, after cloning this repo:
+
+```bash
+bash cloudshell_bootstrap.sh
+source ~/.venv/operations-council/bin/activate && set -a && source .env && set +a
+python chapter_03_council/run_local.py
+```
+
+Or open the interactive walkthrough with the Cloud Shell tutorial sidebar:
+
+```bash
+cloudshell launch-tutorial cloudshell_tutorial.md
+```
+
+---
+
+## "Open in Cloud Shell" button (for instructors)
+
+Once this repo is published to GitHub, students can launch it with one click:
+
+```markdown
+[![Open in Cloud Shell](https://gstatic.com/cloudssh/images/open-btn.svg)](https://shell.cloud.google.com/cloudshell/editor?cloudshell_git_repo=https://github.com/atechsnob/operations-council-cloudshell&cloudshell_tutorial=cloudshell_tutorial.md)
+```
+
+The `.cloudshell/open.json` config in this repo activates the tutorial automatically.
+
+---
+
+## What this builds
+
+A multi-agent council that processes incoming helpdesk tickets:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                      THE STEWARD                            │
+│              (Coordinator, gemini-2.5-pro)                  │
+│  Receives ticket → Decides who acts → Delegates → Synthesizes│
+└──────────┬──────────────────┬──────────────────┬────────────┘
+           │                  │                  │
+           ▼                  ▼                  ▼
+   TRIAGE SCOUT         LOREMASTER             ENVOY
+  (Classifier)        (RAG retrieval)     (Response draft)
+  gemini-2.5-flash    gemini-2.5-pro      gemini-2.5-pro
+                            │
+                            ▼
+                  ┌──────────────────┐
+                  │ Knowledge Base   │
+                  │ BigQuery + Vector│
+                  └──────────────────┘
+```
+
+By Chapter 7, this council is deployed on Cloud Run, governed by Agent Identity and Agent Gateway, validated by an eval suite, and observable end to end.
+
+---
+
+## Why a Cloud Shell version?
+
+| Concern | Local | Cloud Shell |
+|---|---|---|
+| Install gcloud / Python / Docker | Required | Pre-installed |
+| Authenticate to GCP | `gcloud auth login` flow | Already authenticated as you |
+| Run Cloud Build | Possible | First-class |
+| Run uvicorn + browse via Web Preview | Need local port-forward | Built-in toolbar button |
+| Cost | Free | Free (50 hr/week of Cloud Shell, plus normal GCP charges for APIs you call) |
+| Persistence | Your machine | 5 GB Cloud Shell home dir |
+
+For a LinkedIn Learning audience, Cloud Shell removes the biggest friction: "I tried to follow along but my Python install is broken."
+
+---
+
+## Chapter map
+
+| Chapter | What you build | Time |
+|---|---|---|
+| 1. Welcome | Bootstrap, verify environment | 5 min |
+| 2. First Strike | Single-agent prototype (the "before") | 5 min |
+| 3. Forging the Specialists | Four-agent Council in ADK + local runner | 15 min |
+| 4. Memory and the Map | MCP CRM server + Memory Bank wiring | 10 min |
+| 5. Trial by Fire | Eval datasets + pytest suite + scorer | 10 min |
+| 6. The Governance Chamber | Agent Identity + Registry + Gateway + Model Armor | 10 min |
+| 7. The Final Trial | Cloud Build CI/CD + Cloud Run + Megaticket | 15 min |
+| 8. Council Adjourned | Wrap-up + what's next | 5 min |
+
+---
+
+## What the bootstrap does for you
+
+`cloudshell_bootstrap.sh` is the Cloud Shell replacement for `setup_env.sh`. It:
+
+1. Auto-detects `PROJECT_ID` from your `gcloud config` — no manual export
+2. Creates a Python virtualenv at `~/.venv/operations-council` (survives Cloud Shell session restarts thanks to home dir persistence)
+3. Installs all course dependencies
+4. Generates a `.env` file from your gcloud config
+5. Enables 10 Google Cloud APIs
+6. Creates the `operations-council-sa` service account with 11 IAM roles
+7. Creates the Artifact Registry Docker repo
+8. Creates the BigQuery dataset
+9. Loads the knowledge base into BigQuery with embeddings
+
+Idempotent — safe to re-run if anything fails.
+
+---
+
+## Cloud Shell tips
+
+- **Persistent home directory:** Your `~/.venv/operations-council/` and `.env` survive across Cloud Shell sessions automatically.
+- **Web Preview:** Click the eye icon in the toolbar to preview anything running on port 8080 (use this for `uvicorn` in Chapter 7).
+- **Multiple tabs:** Hit the `+` to open a new shell tab for the MCP server in Chapter 4 while keeping the Council runner in the main tab.
+- **Editor:** Click the pencil icon to open the Cloud Shell Editor (a full VS Code-in-the-browser) for editing prompts and code.
+- **Boost mode:** If a Chapter 7 build runs slowly, click your profile → **Boost mode** for more CPU.
+
+---
+
+## Files unique to this Cloud Shell variant
+
+| File | Purpose |
+|---|---|
+| `cloudshell_bootstrap.sh` | Replaces `scripts/setup_env.sh` — adds venv + auto-detected project + KB load |
+| `cloudshell_tutorial.md` | Interactive walkthrough for the Cloud Shell tutorial sidebar |
+| `.cloudshell/open.json` | Auto-activates the tutorial on repo open |
+| `README.md` (this file) | Cloud Shell-specific quick start |
+
+Everything else (the agent code, evals, Dockerfile, governance configs) is identical to the local-dev version.
+
+---
+
+## A note on Next '26 product names
+
+This course uses the post-Next '26 (April 2026) Gemini Enterprise Agent Platform branding. Some service names changed:
+
+| Old name (pre-Apr 2026) | New name |
+|---|---|
+| Vertex AI | Gemini Enterprise Agent Platform |
+| Vertex AI Search | Agent Platform Vector Search |
+| Vertex AI Agent Engine | Agent Runtime |
+| Vertex AI Memory Bank | Agent Memory Bank |
+
+URL paths in `gcloud` and the docs still reference `vertex-ai/` — that's expected.
+
+---
+
+## Cleanup
+
+To avoid ongoing charges after the course:
+
+```bash
+gcloud run services delete operations-council --region=us-central1 --quiet
+gcloud artifacts repositories delete operations-council-repo --location=us-central1 --quiet
+bq rm -r -f -d operations_council
+```
+
+The service account, IAM bindings, and enabled APIs cost nothing.
+
+---
+
+## License
+
+Code in this repository is provided for educational use alongside the LinkedIn Learning course. See `LICENSE` for details.
+
+
+
+
+============================================================
+--- SOURCE: chapter_01_setup/README.md ---
+============================================================
+
+# Chapter 1 — Welcome to the AI Service Desk (Cloud Shell)
+
+## Quest brief
+
+You've been recruited as the Architect of the Council — a guild of four AI agents that will take over your company's helpdesk backlog. Before you can summon the agents, you need to prepare your workspace. In Cloud Shell, that means running one bootstrap script and confirming the environment is ready.
+
+**Plain English:** This chapter is project setup. One script enables the right Google Cloud APIs, creates a service account, builds a Python virtualenv, generates your `.env` file, and loads the knowledge base. The verify script then confirms everything is wired correctly.
+
+---
+
+## Step 1 — Confirm your project
+
+```bash
+gcloud config get-value project
+```
+
+If the wrong project is shown:
+
+```bash
+gcloud config set project YOUR_PROJECT_ID
+```
+
+Make sure billing is enabled on the project.
+
+---
+
+## Step 2 — Run the bootstrap
+
+```bash
+bash cloudshell_bootstrap.sh
+```
+
+This takes 2–4 minutes. It:
+
+- Detects your project from `gcloud config` (no manual `export PROJECT_ID` needed)
+- Creates a Python venv at `~/.venv/operations-council`
+- Installs all course dependencies into the venv
+- Generates a `.env` file from your gcloud config
+- Enables 10 Google Cloud APIs
+- Creates the `operations-council-sa` service account with required roles
+- Creates the Artifact Registry Docker repo
+- Creates the BigQuery dataset
+- Loads the knowledge base into BigQuery (with embeddings)
+
+The script is idempotent — re-running is safe.
+
+---
+
+## Step 3 — Activate the venv
+
+The bootstrap creates the venv but each new shell tab needs to activate it. Run:
+
+```bash
+source ~/.venv/operations-council/bin/activate
+set -a && source .env && set +a
+```
+
+You can save typing by adding this to `~/.bashrc`:
+
+```bash
+echo 'alias council-env="source ~/.venv/operations-council/bin/activate && set -a && source ~/operations-council-cloudshell/.env && set +a"' >> ~/.bashrc
+```
+
+Then in any new tab: `council-env`
+
+---
+
+## Step 4 — Verify the environment
+
+```bash
+python chapter_01_setup/verify_setup.py
+```
+
+Every check should show ✅. The script tests:
+
+- Python 3.10+ (Cloud Shell ships 3.10+; venv may use 3.11 or 3.12)
+- All required packages installed
+- `gcloud` CLI authenticated
+- BigQuery API accessible
+- Gemini Enterprise Agent Platform SDK initialized
+- All course data files present
+- Cloud Shell environment detected
+
+---
+
+## Step 5 — Confirm the knowledge base loaded
+
+```bash
+bq query --use_legacy_sql=false --project_id=$PROJECT_ID \
+  "SELECT article_id, title FROM \`$PROJECT_ID.operations_council.knowledge_base\` LIMIT 10"
+```
+
+You should see 8 article rows. If the table is missing or empty:
+
+```bash
+python scripts/load_knowledge_base.py
+```
+
+---
+
+## ContosoCloud — the fictional company
+
+All sample data uses a fictional company called **ContosoCloud**, a B2B cloud infrastructure provider. The 8 knowledge base articles cover common helpdesk scenarios: password resets, billing disputes, outages, quota limits, permissions, escalations, cost controls, and data exports.
+
+---
+
+## Cloud Shell quirks worth knowing
+
+- **Session timeout:** Cloud Shell disconnects idle sessions after about 1 hour. Reconnect, run `council-env` (if you set the alias), and continue. Your venv and `.env` persist.
+- **Disk quota:** 5 GB. The full venv is ~1 GB. Run `du -sh ~/.venv/operations-council` to check.
+- **Boost mode:** If pip install or Cloud Build feels slow, enable Boost in the toolbar profile menu. It gives you more CPU for the rest of the session.
+
+---
+
+## Checkpoint
+
+- [ ] `gcloud config get-value project` shows the right project
+- [ ] `cloudshell_bootstrap.sh` finished without errors
+- [ ] `python chapter_01_setup/verify_setup.py` shows all ✅
+- [ ] `bq query ...` returns 8 KB articles
+
+---
+
+**Next:** [Chapter 2 — First Strike: Your First Agent in Agent Studio](../chapter_02_agent_studio/README.md)
+
+
+
+
+============================================================
+--- SOURCE: chapter_02_agent_studio/README.md ---
+============================================================
+
+# Chapter 2 — First Strike: Your First Agent in Agent Studio
+
+## Quest brief
+
+Every Council member starts as a solo operative before joining the guild. In this chapter you'll build the **Triage Scout** as a single agent — first by clicking through Agent Studio's no-code interface, then by exporting that same logic into Python. When you're done, you'll understand the gap between "it works in the UI" and "it works in production code." That gap is what Chapters 3–7 close.
+
+**Plain English:** This chapter is your "hello world" for ADK. Build one agent that reads a ticket, classifies it, and writes a first response. The goal is momentum, not perfection.
+
+---
+
+## Option A — Agent Studio (no-code, click-through)
+
+1. Open [Agent Studio](https://console.cloud.google.com/vertex-ai/agents) in your GCP project
+2. Click **Create agent**
+3. Fill in:
+   - **Name:** `triage-scout-prototype`
+   - **Model:** `gemini-2.5-flash`
+   - **System instruction:** paste the `SYSTEM_PROMPT` from `single_agent_triage.py`
+4. In the **Test** panel, paste one of the sample tickets from `data/sample_tickets.json`
+5. Observe the response — classification, priority, and first-response draft
+6. When you're satisfied, click **Export → Python (ADK)**
+
+The exported code will look similar to `single_agent_triage.py`.
+
+> **Note:** Agent Studio's export feature was announced at Next '26. If it isn't available in your region yet, skip directly to Option B.
+
+---
+
+## Option B — Run the Python version directly
+
+```bash
+source .env
+python chapter_02_agent_studio/single_agent_triage.py
+```
+
+Expected output for `T-1001` (password reset):
+
+```
+TICKET T-1001: Can't log in
+============================================================
+**Category:** PASSWORD_RESET
+**Priority:** MEDIUM
+
+Dear customer,
+
+Thank you for reaching out to ContosoCloud Support. We've received your
+ticket and can confirm this is a password reset request ...
+```
+
+---
+
+## What's happening under the hood
+
+```
+User message → LlmAgent (Gemini Flash) → streamed response
+```
+
+`InMemoryRunner` drives the agent locally — no Cloud Run, no network calls except to the Gemini API. `InMemorySessionService` gives each ticket its own isolated conversation history.
+
+The reflection block at the end of the script explains *why* one agent isn't enough for the Megaticket. Read it before moving on.
+
+---
+
+## Exercises
+
+1. Change `MODEL_FLASH` in your `.env` to `gemini-2.5-flash` and rerun — do the classifications change?
+2. Add a fourth sample ticket with two simultaneous issues (billing + outage). How does the single agent handle priority?
+3. Look at the Megaticket response. Which issues did it miss or combine?
+
+---
+
+## Checkpoint
+
+- [ ] Agent responds to T-1001 with `PASSWORD_RESET` / `MEDIUM`
+- [ ] Megaticket response notes all three issues (billing, outage, data export)
+- [ ] You've read the reflection block and can explain why multi-agent is better here
+
+---
+
+**Next:** [Chapter 3 — Forging the Specialists: The AI Service Desk](../chapter_03_council/README.md)
+
+
+
+
+============================================================
+--- SOURCE: chapter_03_council/README.md ---
+============================================================
+
+# Chapter 3 — Forging the Specialists: The AI Service Desk
+
+## Quest brief
+
+The Triage Scout proved the concept. Now you'll forge the full Council: four agents that hand off to each other through a graph-based network. The Steward receives every ticket, delegates to the right specialists, and synthesizes the final response. By the end of this chapter, your four-agent system handles the Megaticket that defeated the solo agent.
+
+**Plain English:** This is the core architecture chapter. You'll build four `LlmAgent` instances, wire them together using `AgentTool`, and run the full pipeline locally.
+
+---
+
+## The four agents
+
+| Agent | Model | Role |
+|---|---|---|
+| **Triage Scout** | Gemini Flash | Classifies ticket → category + priority JSON |
+| **Loremaster** | Gemini Pro | Searches BigQuery KB → returns relevant articles |
+| **Envoy** | Gemini Pro | Drafts the customer-facing response |
+| **Steward** | Gemini Pro | Coordinator — calls the other three in sequence |
+
+---
+
+## Files in this chapter
+
+| File | What it does |
+|---|---|
+| `config.py` | Shared env vars (project, models, BQ table IDs) |
+| `triage_scout.py` | Classification agent — returns structured JSON |
+| `loremaster.py` | RAG agent — BigQuery vector search tool |
+| `envoy.py` | Response drafting agent |
+| `steward.py` | Coordinator — wraps the other three as `AgentTool` |
+| `run_local.py` | Local runner — processes all sample tickets |
+
+---
+
+## Run the Council
+
+```bash
+source .env
+python chapter_03_council/run_local.py
+```
+
+Single ticket:
+
+```bash
+python chapter_03_council/run_local.py --ticket T-1001
+```
+
+Verbose mode (shows intermediate steps):
+
+```bash
+python chapter_03_council/run_local.py --ticket T-megaticket-001 --verbose
+```
+
+---
+
+## How agent delegation works
+
+The Steward uses `AgentTool` to call each specialist:
+
+```python
+triage_tool = AgentTool(agent=triage_scout)
+loremaster_tool = AgentTool(agent=loremaster)
+envoy_tool = AgentTool(agent=envoy)
+
+steward = LlmAgent(
+    ...
+    tools=[triage_tool, loremaster_tool, envoy_tool],
+)
+```
+
+`AgentTool` turns an `LlmAgent` into a callable tool. The Steward decides when to
+call each one based on its instruction. This is the **graph-based sub-agent pattern**
+announced at Next '26 — each agent is a node; the Steward is the orchestration layer.
+
+**Plain English:** Think of `AgentTool` like calling a function — except the
+"function" is another AI that can reason, use its own tools, and return a
+natural-language result.
+
+---
+
+## The Loremaster's vector search
+
+`loremaster.py` uses BigQuery ML `VECTOR_SEARCH` against the knowledge base table
+you loaded in Chapter 1. The SQL template:
+
+```sql
+SELECT base.article_id, base.title, base.content, distance
+FROM VECTOR_SEARCH(
+  TABLE `project.dataset.knowledge_base`,
+  'embedding',
+  (SELECT ml_generate_embedding_result AS embedding
+   FROM ML.GENERATE_EMBEDDING(MODEL `...text-embedding-005`, ...)),
+  top_k => 3,
+  distance_type => 'COSINE'
+)
+ORDER BY distance ASC
+```
+
+If the KB hasn't been loaded yet, the Loremaster returns `"count": 0` and the
+Envoy falls back to general policy language.
+
+---
+
+## Expected output for T-megaticket-001
+
+```
+TICKET ID: T-megaticket-001
+CATEGORY:  MULTI_ISSUE
+PRIORITY:  CRITICAL
+RATIONALE: Ticket contains three distinct issues — billing dispute with refund demand,
+           active outage, and data export request. Billing urgency + "board update in
+           48 hours" triggers CRITICAL.
+KB ARTICLES USED: kb_002, kb_003, kb_008
+
+--- DRAFT RESPONSE ---
+Dear ContosoCloud customer,
+
+Thank you for writing in. I can see you're dealing with three separate issues at once,
+and I want to make sure each one gets the attention it deserves.
+...
+--- END DRAFT ---
+
+⚠️  HUMAN REVIEW REQUIRED before sending this response.
+    Reason: critical priority
+```
+
+---
+
+## Common issues
+
+**`bigquery.exceptions.NotFound`** — The KB table doesn't exist yet. Run `python scripts/load_knowledge_base.py` first.
+
+**`google.api_core.exceptions.PermissionDenied`** — Your service account is missing `roles/bigquery.dataViewer`. Check `setup_env.sh` ran cleanly.
+
+**Empty Loremaster results** — Query too vague; try `--verbose` to see what query was sent.
+
+---
+
+## Checkpoint
+
+- [ ] `run_local.py` processes all 6 sample tickets without errors
+- [ ] The Megaticket result shows `MULTI_ISSUE` / `CRITICAL`
+- [ ] Draft response addresses all three sub-issues
+- [ ] `⚠️ HUMAN REVIEW REQUIRED` flag appears on the Megaticket
+
+---
+
+**Next:** [Chapter 4 — Memory and the Map: MCP + Memory Bank](../chapter_04_memory_and_mcp/README.md)
+
+
+
+
+============================================================
+--- SOURCE: chapter_04_memory_and_mcp/README.md ---
+============================================================
+
+# Chapter 4 — Memory and the Map: MCP + Memory Bank
+
+## Quest brief
+
+A Council without memory is a Council that re-introduces itself every session. In this chapter you give the Steward two new powers: **short-term CRM awareness** via the Model Context Protocol (MCP), and **long-term customer memory** via the Agent Memory Bank. By the end, the Steward knows that u-megacorp had a billing dispute in February before it even reads the Megaticket.
+
+**Plain English:** MCP lets your agent call external systems (like a CRM) as tools. Memory Bank is a managed store for facts that should persist across sessions. This chapter adds both.
+
+---
+
+## Files in this chapter
+
+| File | What it does |
+|---|---|
+| `mcp_server.py` | Fake CRM server exposing 3 tools over MCP stdio |
+| `memory_wiring.py` | Memory Bank API wrapper + session ID mapper |
+| `run_with_mcp.py` | Updated Steward that calls the CRM before/after processing |
+
+---
+
+## Part 1 — MCP: The CRM connection
+
+### Start the MCP server
+
+In a separate terminal:
+
+```bash
+python chapter_04_memory_and_mcp/mcp_server.py
+```
+
+You'll see: `ContosoCloud CRM MCP server starting on stdio…`
+
+### Run the Council with CRM access
+
+In your main terminal:
+
+```bash
+python chapter_04_memory_and_mcp/run_with_mcp.py
+```
+
+### What the Steward gains
+
+Before the Megaticket workflow, the Steward now calls:
+
+```
+get_ticket_history("T-megaticket-001")
+```
+
+Which returns the prior history (the Feb cancellation context). This flows
+into the Loremaster query and the Envoy's tone — the Envoy knows to reference
+the February cancellation confirmation proactively.
+
+After the workflow:
+
+```
+update_ticket_status("T-megaticket-001", "IN_PROGRESS", "Draft sent to human review — CRITICAL priority")
+```
+
+### The three CRM tools
+
+| Tool | Purpose |
+|---|---|
+| `get_ticket_history` | Full history for a ticket_id |
+| `update_ticket_status` | Write a status + note back to the CRM |
+| `list_open_tickets` | All OPEN / IN_PROGRESS tickets (used in Chapter 7) |
+
+---
+
+## Part 2 — Memory Bank: Cross-session customer memory
+
+### What it does
+
+Agent Memory Bank stores facts that should survive across completely separate
+sessions. For example:
+- u-alice prefers email resolution over the portal
+- u-megacorp had a billing credit in February 2026
+
+The Steward can recall these before processing a new ticket — even if it's a
+brand-new ADK session with no prior context.
+
+### Run the memory demo
+
+```bash
+python chapter_04_memory_and_mcp/memory_wiring.py
+```
+
+> **Important:** If you're running before the Memory Bank Python SDK ships,
+> the script runs in mock mode and prints what *would* be stored. The API surface
+> is illustrative — verify the exact method names against the Agent Platform release
+> notes before deploying.
+
+### Session ID mapping
+
+The `SessionMapper` class in `memory_wiring.py` solves a practical problem:
+ADK uses its own session IDs, but your CRM uses ticket IDs. The mapper keeps them
+in sync so you can resume an agent session from a CRM webhook.
+
+---
+
+## How MCP tools differ from regular tools
+
+| Regular `FunctionTool` | MCP `MCPToolset` |
+|---|---|
+| Python function in the same process | External process / server |
+| Schema defined by Python type hints | Schema defined by the MCP server |
+| Ideal for stateless transforms | Ideal for external system integration |
+| No transport layer | stdio or HTTP transport |
+
+---
+
+## Exercises
+
+1. Add a fourth MCP tool: `search_customer_by_email`. What does the server code look like?
+2. Modify the Steward instruction to skip `get_ticket_history` for NEW tickets (where history is empty). Why might you want this?
+3. What happens if the MCP server isn't running when `run_with_mcp.py` starts? How would you handle that gracefully?
+
+---
+
+## Checkpoint
+
+- [ ] `mcp_server.py` starts without errors
+- [ ] `run_with_mcp.py` loads 3 MCP tools successfully
+- [ ] The Steward references previous ticket history in its response
+- [ ] `update_ticket_status` is called at the end of the workflow
+
+---
+
+**Next:** [Chapter 5 — Trial by Fire: Evaluation and Testing](../chapter_05_trial_by_fire/README.md)
+
+
+
+
+============================================================
+--- SOURCE: chapter_05_trial_by_fire/README.md ---
+============================================================
+
+# Chapter 5 — Trial by Fire: Evaluation and Testing
+
+## Quest brief
+
+An agent that isn't evaluated is a liability waiting to happen. The AI Service Desk has defeated the Megaticket — now you'll prove it can be trusted. In this chapter you build a golden evaluation set, a pytest suite with regression guards, and a scoring runner that measures accuracy across every ticket category. By the end, you have a repeatable quality gate you can run in CI.
+
+**Plain English:** "Evals" are structured test cases for AI agents. They're your equivalent of unit tests — but instead of asserting function return values, you assert that the agent classified correctly, included the right information, and flagged what it should. This chapter builds three types of evals and integrates them with pytest.
+
+---
+
+## Files in this chapter
+
+| File | What it does |
+|---|---|
+| `golden_eval_set.json` | 6 hand-curated test cases with expected categories, keywords, and flags |
+| `test_council.py` | pytest suite — unit (Triage), integration (Steward), regression guards |
+| `run_eval.py` | Standalone scorer — prints accuracy table and aggregate scores |
+
+---
+
+## Part 1 — The golden eval set
+
+`golden_eval_set.json` contains one case per ticket category:
+
+| Eval case | Category | Priority | Key assertion |
+|---|---|---|---|
+| eval-001 | PASSWORD_RESET | MEDIUM | Response mentions "password" and "reset" |
+| eval-002 | BILLING_DISPUTE | HIGH | Response mentions "invoice" and "billing" |
+| eval-003 | OUTAGE_REPORT | HIGH | Response mentions "storage" and "timeout" |
+| eval-004 | QUOTA_ISSUE | HIGH | Response mentions "quota" and "limit" |
+| eval-005 | ESCALATION_NEEDED | CRITICAL | Response contains "human review" |
+| eval-006 | MULTI_ISSUE | CRITICAL | Response addresses refund + outage + export |
+
+Each case also has `flags_must_contain` for CRITICAL tickets — the HUMAN REVIEW flag must appear, always.
+
+---
+
+## Part 2 — Run the pytest suite
+
+```bash
+pytest chapter_05_trial_by_fire/test_council.py -v
+```
+
+Run only triage unit tests:
+
+```bash
+pytest chapter_05_trial_by_fire/test_council.py -v -k "triage"
+```
+
+Run only regression guards:
+
+```bash
+pytest chapter_05_trial_by_fire/test_council.py -v -k "regression"
+```
+
+### Test classes
+
+| Class | Layer | What it checks |
+|---|---|---|
+| `TestTriageScout` | Unit | JSON structure, category, priority, rationale, sub_issues |
+| `TestStewardIntegration` | Integration | keyword coverage, topic exclusion |
+| `TestRegressionGuards` | Regression | CRITICAL tickets always produce human-review flag |
+
+---
+
+## Part 3 — Run the scorer
+
+```bash
+python chapter_05_trial_by_fire/run_eval.py
+```
+
+Single case:
+
+```bash
+python chapter_05_trial_by_fire/run_eval.py --case eval-006
+```
+
+Expected output:
+
+```
+AI Service Desk — Evaluation Run
+Evaluating 6 case(s) from golden_eval_set.json
+
+┌──────────┬────────────────────┬──────────────┬──────────────┬──────────┬───────┐
+│ ID       │ Name               │ Category     │ Priority     │ Keywords │ Flags │
+├──────────┼────────────────────┼──────────────┼──────────────┼──────────┼───────┤
+│ eval-001 │ password_reset     │ ✓            │ ✓            │ 100%     │ 100%  │
+│ eval-005 │ escalation_critical│ ✓            │ ✓            │ 100%     │ 100%  │
+│ eval-006 │ megaticket         │ ✓            │ ✓            │ 100%     │ 100%  │
+└──────────┴────────────────────┴──────────────┴──────────────┴──────────┴───────┘
+
+Aggregate scores: category=100%  priority=100%  keywords=100%  flags=100%
+✓ All cases passed.
+```
+
+---
+
+## Three eval layers explained
+
+```
+  UNIT TESTS          INTEGRATION TESTS      REGRESSION GUARDS
+  ──────────          ─────────────────      ─────────────────
+  Triage Scout alone  Steward end-to-end     CRITICAL flag must
+  → is JSON valid?    → are right words       always appear
+  → correct category    in the response?
+  → correct priority
+```
+
+**Plain English:** Unit tests tell you *each specialist works*. Integration tests tell you *the pipeline works*. Regression guards tell you *the safety rules haven't been broken* — even after you change something else.
+
+---
+
+## Running evals in CI (Chapter 7 preview)
+
+In `cloudbuild.yaml` (Chapter 7), the eval suite runs as a build step before deployment:
+
+```yaml
+- name: 'python:3.12'
+  entrypoint: bash
+  args:
+    - '-c'
+    - 'pip install -r requirements.txt && pytest chapter_05_trial_by_fire/test_council.py -v'
+```
+
+If any test fails, the build stops and the agent doesn't deploy.
+
+---
+
+## Exercises
+
+1. Add a new eval case for a `DATA_EXPORT` ticket without any urgency signals. What priority should it be?
+2. Change `TestTriageScout.test_triage_category_and_priority` to also assert that `rationale` is present. Does it pass?
+3. What would happen if you removed the escalation instruction from the Steward? Which test would fail first?
+
+---
+
+## Checkpoint
+
+- [ ] `pytest test_council.py -v` runs all tests (some may be slow — that's expected)
+- [ ] Triage Scout returns valid JSON for every test case
+- [ ] `run_eval.py` prints a results table
+- [ ] CRITICAL tickets always have the human-review flag (regression guard passes)
+
+> **Expect some failures.** If you see 14 passed / 7 failed, that's a typical first run — not a broken setup. LLMs are non-deterministic: the Triage Scout might wrap its JSON in markdown fences (` ```json ``` `), or the model might rephrase "refund" as "billing adjustment." Read the failing test messages — if the *concept* was addressed but the *exact keyword* was missed, the agent is working correctly and the eval is surfacing the brittleness of exact-string matching. That's the lesson of this chapter.
+
+---
+
+**Next:** [Chapter 6 — The Governance Chamber](../chapter_06_governance/README.md)
+
+
+
+
+============================================================
+--- SOURCE: chapter_06_governance/README.md ---
+============================================================
+
+# Chapter 6 — The Governance Chamber
+
+## Quest brief
+
+A Council without governance is an unsupervised contractor. In this chapter you give the AI Service Desk a paper trail, an identity, and a gate. Each agent gets a cryptographic identity so audit logs can tell the Steward from the Loremaster. The Agent Registry catalogs every agent's capabilities and endpoints. Agent Gateway enforces who can call the Steward and what content is allowed. Model Armor filters prompt injections before they reach Gemini. By the end, the Council is auditable, governable, and compliant.
+
+**Plain English:** This chapter adds the enterprise trust layer. Think of Agent Identity as each agent's badge, the Registry as the org chart, the Gateway as the security checkpoint at the front door, and Model Armor as the bag scanner.
+
+---
+
+## Files in this chapter
+
+| File | What it does |
+|---|---|
+| `agent_identity.py` | Provisions cryptographic identities for all four agents |
+| `registry_config.yaml` | Agent Registry — metadata catalog for all agents |
+| `gateway_config.yaml` | Agent Gateway — auth, rate limits, content policy, routing |
+| `model_armor_demo.py` | Demonstrates input screening and PII redaction |
+
+---
+
+## The governance stack
+
+```
+Customer Ticket
+      │
+      ▼
+ ┌─────────────────────────────────────────┐
+ │         Agent Gateway                   │
+ │  • JWT auth (only allowed callers)      │
+ │  • Rate limiting (60 req/min)           │
+ │  • Routes to Steward endpoint           │
+ └──────────────┬──────────────────────────┘
+                │
+                ▼
+ ┌─────────────────────────────────────────┐
+ │         Model Armor                     │
+ │  • Prompt injection detection           │
+ │  • PII redaction                        │
+ │  • Topic blocking                       │
+ └──────────────┬──────────────────────────┘
+                │
+                ▼
+         The Steward
+    (+ Triage Scout, Loremaster, Envoy)
+                │
+                ▼
+ ┌─────────────────────────────────────────┐
+ │      Agent Identity + Audit Logs        │
+ │  • Each agent call attributed to its    │
+ │    cryptographic identity               │
+ │  • Full input/output logs to BigQuery   │
+ └─────────────────────────────────────────┘
+```
+
+---
+
+## Part 1 — Agent Identity
+
+```bash
+python chapter_06_governance/agent_identity.py
+```
+
+In mock mode (SDK not yet available) this prints the identity resource names that *would* be provisioned. Once the SDK ships, the same code makes real API calls.
+
+**Why agent-level identity matters for compliance:**
+Without it, Cloud Audit Logs show `service-account@project.iam.gserviceaccount.com` — you can't tell which of the four agents made a call. With Agent Identity, the log entry says `Loremaster` and includes the attestation token. That's the difference between "an agent called BigQuery" and "the Loremaster called BigQuery at 09:14:03 while processing ticket T-1005."
+
+---
+
+## Part 2 — Agent Registry
+
+The Registry YAML is declarative — one `gcloud` command applies it:
+
+```bash
+envsubst < chapter_06_governance/registry_config.yaml | \
+  gcloud agent-platform registries apply --config=- --project=$PROJECT_ID
+```
+
+> `envsubst` substitutes `${PROJECT_ID}` and `${PROJECT_NUMBER}` from your environment. Requires `gettext` (brew install gettext / apt install gettext).
+
+The Registry stores each agent's version, model, capabilities, and identity reference. Agent Gateway uses this to validate routing rules and capability requirements.
+
+---
+
+## Part 3 — Agent Gateway
+
+Apply the gateway config:
+
+```bash
+envsubst < chapter_06_governance/gateway_config.yaml | \
+  gcloud agent-platform gateways apply --config=- --project=$PROJECT_ID
+```
+
+Once deployed, the Steward is only reachable via the Gateway URL. Direct Cloud Run access is blocked by IAM. This means:
+- All tickets go through rate limiting and content filtering
+- The only way to bypass Model Armor is to get IAM access to Cloud Run directly (your compliance team's concern, not yours)
+
+---
+
+## Part 4 — Model Armor
+
+```bash
+python chapter_06_governance/model_armor_demo.py
+```
+
+Three demo cases:
+1. Normal ticket with PII → PII redacted before reaching Gemini
+2. Prompt injection attempt → blocked at the gate
+3. Credit card / SSN in ticket body → redacted
+
+**Why this matters for SLED / federal customers:** Agencies often require that no PII touches the LLM. Model Armor's redaction happens *before* the prompt reaches Gemini, which means the audit trail shows only `[EMAIL REDACTED]` in the model input log — not the actual address.
+
+---
+
+## VERIFY checklist
+
+These four features were announced at Next '26 (April 2026). Before deploying to production:
+
+- [ ] `AgentIdentityServiceClient` — confirm import path in current SDK
+- [ ] `ModelArmorServiceClient` — confirm `sanitize_user_prompt` method name
+- [ ] Registry YAML — confirm `apiVersion` string against current docs
+- [ ] Gateway YAML — confirm `contentPolicy.modelArmor.policyRef` field name
+
+---
+
+## Exercises
+
+1. Add a `PROFANITY` category to the Model Armor local screen. What regex patterns would catch it?
+2. What would the audit log entry look like if the Loremaster called BigQuery with Agent Identity attached vs. without?
+3. In `gateway_config.yaml`, change `sampleRate` to `0.1`. When would you want 10% sampling vs 100%?
+
+---
+
+## Checkpoint
+
+- [ ] `agent_identity.py` runs without errors (mock mode is fine)
+- [ ] `model_armor_demo.py` blocks the injection attempt and redacts PII
+- [ ] Registry and Gateway YAMLs have `${PROJECT_ID}` placeholders ready for substitution
+- [ ] You can explain the difference between Agent Identity and service account identity
+
+---
+
+**Next:** [Chapter 7 — The Final Trial: Production Deployment](../chapter_07_deployment/README.md)
+
+
+
+
+============================================================
+--- SOURCE: chapter_07_deployment/README.md ---
+============================================================
+
+# Chapter 7 — The Final Trial: Production Deployment
+
+## Quest brief
+
+The Council has been tested in the training grounds. Now it's time to deploy it to the world. In this chapter you containerize the Steward, run the eval suite as a deployment gate in Cloud Build, push the image to Artifact Registry, deploy to Cloud Run, and run the Megaticket through the live production endpoint. When `megaticket_scenario.py` exits with all assertions green, the Council has passed the Final Trial.
+
+**Plain English:** This chapter packages the agent as a Docker container, builds a CI/CD pipeline that won't deploy if tests fail, and deploys the whole thing to a managed cloud service (Cloud Run) that auto-scales, handles auth, and gives you logs without managing servers.
+
+---
+
+## Files in this chapter
+
+| File | What it does |
+|---|---|
+| `Dockerfile` | Container definition — Python 3.12 + uvicorn + FastAPI |
+| `cloudbuild.yaml` | CI/CD pipeline — test → build → push → deploy |
+| `deploy.sh` | One-command deploy with confirmation prompt |
+| `main.py` | FastAPI app wrapping the Steward agent |
+| `megaticket_scenario.py` | Capstone script — sends Megaticket to production endpoint |
+
+---
+
+## Architecture: what Cloud Run gets
+
+```
+Internet / ticket ingest system
+          │
+          ▼
+   Agent Gateway         ← Chapter 6: auth + rate limiting + Model Armor
+          │
+          ▼
+   Cloud Run service      ← This chapter
+   "operations-council"
+   ┌──────────────────┐
+   │ FastAPI (main.py)│
+   │  POST /tickets   │
+   │  POST /tickets/batch
+   │  GET  /health    │
+   │  GET  /ready     │
+   └────────┬─────────┘
+            │
+            ▼
+       Steward (ADK)     ← Chapter 3: multi-agent pipeline
+```
+
+---
+
+## Step 1 — Test locally inside Cloud Shell
+
+Before deploying, run the FastAPI app in Cloud Shell and preview it via the browser:
+
+```bash
+uvicorn chapter_07_deployment.main:app --host 0.0.0.0 --port 8080
+```
+
+Now click the **Web Preview** button in the Cloud Shell toolbar (top-right, eye icon) → **Preview on port 8080**. A new browser tab opens with FastAPI's auto-generated docs at `/docs` — you can submit tickets interactively there.
+
+Or test from a second Cloud Shell tab:
+
+```bash
+source ~/.venv/operations-council/bin/activate
+set -a && source .env && set +a
+curl -X POST http://localhost:8080/tickets \
+  -H "Content-Type: application/json" \
+  -d '{"ticket_id":"T-local","subject":"Test","body":"Can you help with a password reset?"}'
+```
+
+When you're done, hit `Ctrl+C` in the uvicorn tab.
+
+---
+
+## Step 2 — Deploy via Cloud Build
+
+```bash
+source .env
+./chapter_07_deployment/deploy.sh
+```
+
+The pipeline runs 4 steps:
+
+| Step | What happens |
+|---|---|
+| **test** | `pytest test_council.py -k "not integration"` — unit + regression guards |
+| **build** | `docker build` → image tagged with `$SHORT_SHA` |
+| **push** | Push to Artifact Registry |
+| **deploy** | `gcloud run deploy` — no public access, service account auth |
+
+**Important:** If any pytest test fails, the build stops at Step 1 and Cloud Run is untouched. This is your deployment gate — evals as CI.
+
+---
+
+## Step 3 — Run the Final Trial
+
+Once deployed:
+
+```bash
+source .env
+python chapter_07_deployment/megaticket_scenario.py
+```
+
+The script:
+1. Finds your Cloud Run service URL automatically
+2. Gets a fresh identity token via `gcloud auth print-identity-token`
+3. POSTs the Megaticket to `/tickets`
+4. Prints the full Council response
+5. Runs 5 assertions (refund, storage/timeout, export, human-review flag, CRITICAL priority)
+6. Exits 0 if all pass, exits 1 if any fail
+
+### Understanding your Final Trial results
+
+**Don't panic if 1–2 assertions fail.** This is expected and is one of the most important lessons in the course.
+
+The 5 assertions use **exact keyword matching** — for example, the script checks whether the word "refund" appears in the response. But LLMs are non-deterministic. The Council might write *"investigate the unexpected charge"* or *"process the billing discrepancy"* instead of *"issue a refund"*. The **concept** is fully addressed, but the exact keyword is missing.
+
+Here's what each result means:
+
+| Result | What it means |
+|---|---|
+| **5/5 pass** | The model happened to use every expected keyword — great, but don't expect this every run |
+| **4/5 pass** (typical) | The Council addressed all issues correctly but paraphrased one keyword — this is normal LLM behavior |
+| **3/5 pass** | Review the response — did it address all three issues? If yes, the eval is too brittle, not the agent |
+| **HUMAN REVIEW or CRITICAL fails** | This is a real concern — these are safety-critical assertions that should always pass |
+
+**The takeaway:** Exact-string matching is a starting point, not a production-grade evaluation strategy. In a real deployment, you'd use:
+
+- **Semantic similarity** — embedding the expected and actual outputs and comparing cosine distance
+- **LLM-as-judge** — a separate model evaluates whether the response addresses the requirement
+- **Fuzzy keyword matching** — checking for word stems (`refund`, `refunded`, `refunding`) rather than exact strings
+- **Structured output parsing** — enforcing JSON schemas so assertions can target fields, not free text
+
+This is exactly the gap Chapter 5 surfaces — the difference between *"it works in a demo"* and *"it passes a test suite reliably."*
+
+---
+
+## Cloud Run configuration
+
+The deployment sets these key options:
+
+| Setting | Value | Reason |
+|---|---|---|
+| `--memory=2Gi` | 2 GB | ADK + multiple Gemini sessions |
+| `--cpu=2` | 2 vCPU | Concurrent async requests |
+| `--concurrency=10` | 10 | Each request uses ~200MB peak |
+| `--min-instances=1` | 1 | Avoid cold start on first ticket |
+| `--no-allow-unauthenticated` | — | Agent Gateway handles auth |
+
+---
+
+## Blue-green / traffic splitting (optional extension)
+
+Cloud Run supports traffic splitting by revision tag. After your first deploy:
+
+```bash
+# Deploy a canary revision
+gcloud run deploy operations-council \
+  --image=...council:new-sha \
+  --tag=canary \
+  --no-traffic \
+  --region=$REGION
+
+# Send 10% to canary
+gcloud run services update-traffic operations-council \
+  --to-tags=canary=10,latest=90 \
+  --region=$REGION
+
+# Promote canary to 100% after validation
+gcloud run services update-traffic operations-council \
+  --to-latest \
+  --region=$REGION
+```
+
+---
+
+## Exercises
+
+1. Add a `/tickets/batch` test in `megaticket_scenario.py` that sends all 6 sample tickets at once. What's the total latency vs. sequential?
+2. Look at Cloud Trace in the GCP console after running the Megaticket. How many spans does the Steward produce?
+3. Change `--min-instances=1` to `--min-instances=0` and redeploy. What happens to the first request after 5 minutes of inactivity?
+
+---
+
+## Checkpoint
+
+- [ ] `uvicorn chapter_07_deployment.main:app` starts locally
+- [ ] `curl /health` returns `{"status": "ok"}`
+- [ ] `deploy.sh` completes without error
+- [ ] Cloud Run service appears in `gcloud run services list`
+- [ ] `megaticket_scenario.py` exits with all 5 assertions green
+
+---
+
+**Next:** [Chapter 8 — Council Adjourned: What's Next](../chapter_08_wrap_up/README.md)
+
+
+
+
+============================================================
+--- SOURCE: chapter_08_wrap_up/README.md ---
+============================================================
+
+# Chapter 8 — Council Adjourned: What's Next
+
+## Quest complete
+
+The AI Service Desk is deployed. The Megaticket is resolved. The governance chamber is sealed. You've built something that didn't exist six chapters ago: a four-agent system that classifies, retrieves, drafts, coordinates, governs itself, and deploys with a CI/CD pipeline that won't let bad code through.
+
+Here's what you actually built, stripped of the narrative:
+
+| Chapter | What you built | Why it matters |
+|---|---|---|
+| 1 | Environment and data scaffolding | Everything else depends on this being right |
+| 2 | Single-agent prototype | Establishes the baseline — and its limits |
+| 3 | Four-agent graph network (ADK) | The core architecture pattern |
+| 4 | MCP CRM integration + Memory Bank | Agents connected to real systems, not just Gemini |
+| 5 | Eval suite + pytest regression guards | Quality gates — agents you can trust and improve |
+| 6 | Agent Identity + Gateway + Model Armor | Enterprise trust layer — audit trail, auth, safety |
+| 7 | Dockerfile + Cloud Build + Cloud Run | Deployable, scalable, CI/CD-gated production service |
+
+---
+
+## A note on your results
+
+If you're reading this, you've run the course from start to finish. Along the way you probably noticed:
+
+- **Chapter 5:** Some pytest tests failed. The Triage Scout returned JSON wrapped in markdown fences, or a CRITICAL ticket didn't include the exact text "HUMAN REVIEW REQUIRED."
+- **Chapter 7:** The Final Trial's automatic assertions caught 4 out of 5 — maybe the model wrote "billing discrepancy" instead of "refund."
+
+**This is normal. This is the lesson.**
+
+LLMs are non-deterministic. The same prompt, same model, same input can produce subtly different outputs on every run. The Council *understood* every issue and *addressed* every concern — but it didn't always use the exact words your assertions expected.
+
+### What this teaches you about production evaluation
+
+| Approach | Brittle? | When to use |
+|---|---|---|
+| Exact keyword match (`"refund" in output`) | Yes | Quick smoke tests; never as the only eval |
+| Fuzzy / stemmed matching (`refund*`, `billing*`) | Less | Better for keyword coverage checks |
+| Semantic similarity (embedding distance) | No | When you care about meaning, not wording |
+| LLM-as-judge (a second model scores the response) | No | Gold standard for open-ended quality |
+| Structured output (JSON schema enforcement) | No | When you can constrain the model's format |
+
+The eval suite in Chapter 5 intentionally uses the simplest approach — exact matching — so you experience the brittleness firsthand. In production, you'd layer these approaches: structured output for classification fields, semantic similarity for response quality, and LLM-as-judge for nuanced requirements like tone and compliance.
+
+**The fact that your Council handled the Megaticket correctly despite a keyword assertion miss is proof that the agent works. The assertion miss is proof that your eval needs to evolve.** That tension — between agent capability and eval reliability — is the central challenge of production AI systems.
+
+---
+
+## The pattern you now own
+
+```
+Prototype → Specialists → Memory/Tools → Evals → Governance → Deploy
+```
+
+This pattern is reusable. The next time someone asks you to build an agent system — for procurement, for compliance review, for document analysis — you have a template:
+
+1. Start with a single agent (Chapter 2 pattern)
+2. Identify the capabilities that deserve specialization (Chapter 3)
+3. Connect to external systems via MCP; add persistent memory where needed (Chapter 4)
+4. Define a golden eval set *before* you think you're done (Chapter 5)
+5. Add identity, registry, and gateway before the first production request (Chapter 6)
+6. Deploy behind CI — evals gate the pipeline (Chapter 7)
+
+---
+
+## What to explore next
+
+### On the Gemini Enterprise Agent Platform
+
+**Agent Garden** — Pre-built agent templates (invoice processing, financial analysis, customer 360). Start here if you're building a new agent for a known enterprise workflow. Available in the Agent Studio console.
+
+**Agent Optimizer** — Automated prompt tuning against your eval datasets. Once you have a golden eval set (Chapter 5 pattern), the Optimizer can improve your agents' accuracy without manual prompt iteration.
+
+**Agent Simulation** — Synthetic load testing for multi-agent pipelines. Generates thousands of synthetic tickets from your data schema and runs them through your Council to find edge cases before production.
+
+**BigQuery Graph (Agent Platform)** — For the Loremaster, if your knowledge base has relationships (article A references article B, which has prerequisites C and D), BigQuery Graph gives you richer retrieval than pure vector similarity. Worth exploring for enterprise knowledge bases.
+
+### On multi-agent patterns
+
+**A2A (Agent-to-Agent) protocol** — The emerging standard for agents from *different systems* to collaborate. If you ever need to connect a Gemini agent to an agent built on another framework, A2A is the handshake. Watch the ADK release notes.
+
+**Agent Mesh** — Multiple independent Councils serving different business units, with a meta-coordinator that routes tickets to the right Council. Natural next step after this course.
+
+### On production operations
+
+**Cost management** — Cloud Monitoring has pre-built dashboards for Gemini API spend. Set a budget alert before you scale to real production traffic. The `--max-instances` flag on Cloud Run is your first line of defence.
+
+**Prompt versioning** — As you improve the agents, version your system prompts alongside your code. A changed system prompt is a code change — treat it as one. Tag each agent's identity with its prompt version so audit logs can correlate.
+
+**Model updates** — When new Gemini model versions ship, run your full eval suite against the new model before promoting to production. The eval suite from Chapter 5 is exactly the right vehicle for this.
+
+---
+
+## The course in one sentence
+
+You built a production-ready multi-agent helpdesk system on Google Cloud — from single prototype to deployed, governed, tested service — and you know how to rebuild it for any enterprise workflow.
+
+---
+
+## Thank you
+
+Thank you for building alongside me. If you have questions, feedback, or want to share what you built on top of this — find the course discussion forum on LinkedIn Learning or connect with me directly.
+
+The Council is adjourned. Go build something remarkable.
+
+---
+
+*Course: The AI Service Desk — Build a Production-Ready Multi-Agent System on Google Cloud*
+*Platform: LinkedIn Learning*
+*Instructor: Mark Johnson*
+*Tools: Gemini Enterprise Agent Platform, ADK, BigQuery, Cloud Run, Cloud Build, MCP*
+
+
